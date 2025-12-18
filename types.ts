@@ -19,17 +19,13 @@ export interface Item {
 export interface Choice {
   id: string;
   text: string;
-  coldHeartImpact: number;
-  narrativePrompt: string; // Sent to Gemini to generate outcome
-  fallbackText: string; // Used if API fails
+  fallbackText: string;
 }
 
 export interface GameState {
   phase: GamePhase;
-  coldHeart: number; // 0 to 100
   inventory: Item[];
   distance: number; // 0 to 5 miles
-  history: { turn: number; coldHeart: number }[]; 
   claimedItems: string[]; 
   lastChoice?: string;
   isLoadingNarrative: boolean;

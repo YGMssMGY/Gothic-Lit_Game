@@ -18,22 +18,16 @@ export const NARRATIVE = {
         {
           id: 'pray',
           text: "Place a votive offering",
-          coldHeartImpact: -10,
-          narrativePrompt: "The girl stops to place a small loaf on a grave.",
           fallbackText: "You leave a small loaf. The bears will lumber from the margins to snatch it away."
         },
         {
           id: 'devil',
           text: "Look for the Devil",
-          coldHeartImpact: 10,
-          narrativePrompt: "The girl looks into the shadows of the graveyard.",
           fallbackText: "They say at midnight the Devil holds picnics here and invites the witches to eat fresh corpses."
         },
         {
           id: 'ignore',
           text: "Walk past",
-          coldHeartImpact: 5,
-          narrativePrompt: "The girl walks past the graves.",
           fallbackText: "You keep walking. The cold wind bites."
         }
       ]
@@ -45,15 +39,11 @@ export const NARRATIVE = {
         {
           id: 'hide',
           text: "Hide in the snow",
-          coldHeartImpact: -5,
-          narrativePrompt: "The girl hides in a snowdrift.",
           fallbackText: "You crouch in the snow. Innocence is no protection here."
         },
         {
           id: 'knife',
           text: "Draw your knife",
-          coldHeartImpact: 10,
-          narrativePrompt: "The girl draws her knife.",
           fallbackText: "You grip the handle of your father's knife. You know how to use it."
         }
       ]
@@ -65,15 +55,11 @@ export const NARRATIVE = {
         {
           id: 'take',
           text: "Kick it aside",
-          coldHeartImpact: 5,
-          narrativePrompt: "The girl kicks the garlic wreath.",
           fallbackText: "You kick the wreath. Garlic keeps out the vampires, they say."
         },
         {
           id: 'examine',
           text: "Check for tracks",
-          coldHeartImpact: 5,
-          narrativePrompt: "The girl checks for wolf tracks.",
           fallbackText: "You ignore the charm. You scan the snow for the spoor of beasts."
         }
       ]
@@ -85,15 +71,11 @@ export const NARRATIVE = {
         {
           id: 'shiver',
           text: "Pull your sheepskin tight",
-          coldHeartImpact: 0,
-          narrativePrompt: "The girl pulls her coat tight.",
           fallbackText: "Your scabby coat of sheepskin keeps out the cold, but barely."
         },
         {
           id: 'harden',
           text: "Embrace the freeze",
-          coldHeartImpact: 10,
-          narrativePrompt: "The girl lets the cold harden her.",
           fallbackText: "You are a mountaineer's child. You do not die of fright."
         }
       ]
@@ -109,16 +91,16 @@ export const NARRATIVE = {
   },
   COTTAGE: {
     intro: "Grandmother is so sick she has taken to her bed, moaning and shaking with fever. You feel her forehead; it burns.",
-    dialogue: "You shake out the cloth to make a cold compress...",
-    reveal: "...and the wolf's paw falls to the floor. But it is no longer a wolf's paw. It is a hand, chopped off at the wrist, toughened with work. There is a wedding ring on the third finger and a wart on the index finger.",
-    confrontation: "You pull back the sheet. The old woman wakes up, squawking and shrieking like a thing possessed. But you are strong. You see the bloody stump where her right hand should have been."
+    dialogue: "You shake out the cloth from her basket to make her a cold compress...",
+    reveal: "...and the wolf's paw falls to the floor. But it is no longer a wolf's paw. It is a hand, chopped off at the wrist, toughened with work and freckled with old age. There is a wedding ring on the third finger and a wart on the index finger.",
+    confrontation: "You pull back the sheet. The old woman wakes up, squawking and shrieking like a thing possessed. But the child is strong, and armed with her father's hunting knife. There is a bloody stump where her right hand should have been, festering already."
   },
   GAME_OVER: {
     title: "The Fairy Tale Trap",
-    text: "You tried to be kind in a cruel world. But this is not that kind of story. While you slept, the wolf returned."
+    text: "You tried to be kind in a cruel world. But this is not that kind of story. While you slept, grandmother returned to wolf!"
   },
   ENDING: {
     title: "She Prospered",
-    text: "The neighbours knew the wart on the hand at once for a witch's nipple. They drove the old woman, in her shift as she was, out into the snow with sticks, and pelted her with stones until she fell down dead. Now you live in her house; you prosper."
+    text: "The neighbours knew the wart on the hand at once for a witch's nipple. They drove the old woman, in her shift as she was, out into the snow with sticks, beating her old carcass as far as the edge of the forest, and pelted her with stones until she fell down dead. Now you live in her house; you prosper."
   }
 };
