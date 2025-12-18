@@ -1,63 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { createRoot } from 'react-dom/client';
-import { 
-  Sword, 
-  Footprints, 
-  Hand, 
-  Skull, 
-  RotateCcw, 
-  PackageOpen,
-  Crosshair,
-  Home,
-  ShieldAlert,
-  DoorOpen,
-  Eye,
-  Megaphone,
-  Wind,
-  Backpack,
-  X
-} from 'lucide-react';
+/**
+ * IRON & SNOW: THE WEREWOLF
+ * Vanilla JavaScript Implementation
+ */
 
-// --- TYPES ---
+// Fix: Add declaration for the global lucide icon library
+declare const lucide: any;
 
-type GamePhase = 
-  | 'INTRO'
-  | 'HOME'
-  | 'WOODS_CHOICE'
-  | 'AMBUSH'
-  | 'TRANSFORMATION'
-  | 'COTTAGE'
-  | 'GAME_OVER'
-  | 'ENDING';
-
-interface Item {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  isTransformed?: boolean;
-}
-
-interface Choice {
-  id: string;
-  text: string;
-  fallbackText: string;
-}
-
-interface GameState {
-  phase: GamePhase;
-  inventory: Item[];
-  distance: number;
-  claimedItems: string[]; 
-  isLoadingNarrative: boolean;
-}
-
-// --- CONSTANTS ---
+// --- DATA ---
 
 const NARRATIVE = {
   INTRO: {
-    title: "The Werewolf",
-    subtitle: "Iron & Snow",
+    title: "THE WEREWOLF",
     description: "It is a northern country; they have cold weather, they have cold hearts. Cold; tempest; wild beasts in the forest. It is a hard life."
   },
   HOME: {
@@ -69,430 +22,432 @@ const NARRATIVE = {
       mile: 1,
       text: "You pass the graveyard. The graves are marked with portraits of the deceased in the naif style. No flowers grow here.",
       choices: [
-        { id: 'pray', text: "Place a votive offering", fallbackText: "You leave a small loaf. The bears will lumber from the margins to snatch it away." },
-        { id: 'devil', text: "Look for the Devil", fallbackText: "They say at midnight the Devil holds picnics here and invites the witches to eat fresh corpses." },
-        { id: 'ignore', text: "Walk past", fallbackText: "You keep walking. The cold wind bites." }
+        { id: 'pray', text: "Place a votive offering", outcome: "You leave a small loaf. The bears will lumber from the margins to snatch it away." },
+        { id: 'devil', text: "Look for the Devil", outcome: "They say at midnight the Devil holds picnics here and invites the witches to eat fresh corpses." },
+        { id: 'ignore', text: "Walk past", outcome: "You keep walking. The cold wind bites." }
       ]
     },
     {
       mile: 2,
       text: "The path narrows. The trees close in. You hear a rustling in the undergrowth.",
       choices: [
-        { id: 'hide', text: "Hide in the snow", fallbackText: "You crouch in the snow. Innocence is no protection here." },
-        { id: 'knife', text: "Draw your knife", fallbackText: "You grip the handle of your father's knife. You know how to use it." }
+        { id: 'hide', text: "Hide in the snow", outcome: "You crouch in the snow. Innocence is no protection here." },
+        { id: 'knife', text: "Draw your knife", outcome: "You grip the handle of your father's knife. You know how to use it." }
       ]
     },
     {
       mile: 3,
       text: "You see a wreath of garlic on a tree stump, fallen from a woodcutter's door.",
       choices: [
-        { id: 'take', text: "Kick it aside", fallbackText: "You kick the wreath. Garlic keeps out the vampires, they say." },
-        { id: 'examine', text: "Check for tracks", fallbackText: "You ignore the charm. You scan the snow for the spoor of beasts." }
+        { id: 'take', text: "Kick it aside", outcome: "You kick the wreath. Garlic keeps out the vampires, they say." },
+        { id: 'examine', text: "Check for tracks", outcome: "You ignore the charm. You scan the snow for the spoor of beasts." }
       ]
     },
     {
       mile: 4,
       text: "The snow begins to fall thickly. The path is obscured.",
       choices: [
-        { id: 'shiver', text: "Pull your sheepskin tight", fallbackText: "Your scabby coat of sheepskin keeps out the cold, but barely." },
-        { id: 'harden', text: "Embrace the freeze", fallbackText: "You are a mountaineer's child. You do not die of fright." }
+        { id: 'shiver', text: "Pull your sheepskin tight", outcome: "Your scabby coat of sheepskin keeps out the cold, but barely." },
+        { id: 'harden', text: "Embrace the freeze", outcome: "You are a mountaineer's child. You do not die of fright." }
       ]
     }
   ],
   AMBUSH: {
     intro: "Mile 5. A freezing howl tears through the air. You drop your gifts. You seize your knife.",
-    description: "It is a huge one, with red eyes and running, grizzled chops."
+    description: "It is a huge wolf, with red eyes and running, grizzled chops."
   },
   TRANSFORMATION: {
     text: "The wolf let out a gulp, almost a sob. It went lolloping off on three legs, leaving a trail of blood. You wipe the blade on your apron.",
     prompt: "You wrap the wolf's paw in the cloth in which your mother had packed the oatcakes and go on towards grandmother's house."
   },
   COTTAGE: {
-    intro: "Grandmother is so sick she has taken to her bed, moaning and shaking with fever. You feel her forehead; it burns.",
+    intro: "Grandmother is so sick she has taken to her bed, moaning and shaking with fever.",
     dialogue: "You shake out the cloth from her basket to make her a cold compress...",
-    reveal: "...and the wolf's paw falls to the floor. But it is no longer a wolf's paw. It is a hand, chopped off at the wrist, toughened with work and freckled with old age. There is a wedding ring on the third finger.",
-    confrontation: "You pull back the sheet. The old woman wakes up, squawking and shrieking like a thing possessed. But the child is strong, and armed with her father's hunting knife. There is a bloody stump where her right hand should have been, festering already."
-  },
-  GAME_OVER: {
-    title: "The Fairy Tale Trap",
-    text: "You tried to be kind in a cruel world. But this is not that kind of story. While you slept, grandmother returned to wolf!"
+    reveal: "...and the wolf's paw falls to the floor. But it is no longer a wolf's paw. It is a hand, chopped off at the wrist, toughened with work. There is a wedding ring on the finger.",
+    confrontation: "You pull back the sheet. The old woman wakes up, squawking like a thing possessed. There is a bloody stump where her right hand should have been."
   },
   ENDING: {
-    title: "She Prospered",
-    text: "The neighbours knew the wart on the hand at once for a witch's nipple. They drove the old woman out into the snow with sticks, and pelted her with stones until she fell down dead. Now you live in her house; you prosper."
+    title: "SHE PROSPERED",
+    text: "The neighbours knew the wart on the hand at once for a witch's nipple. They drove the old woman out into the snow and pelted her until she fell down dead. Now you live in her house; you prosper."
+  },
+  GAMEOVER: {
+    title: "THE TRAP",
+    text: "You tried to be kind in a cruel world. But while you slept, grandmother returned to wolf and finished what she started."
   }
 };
 
-const AVAILABLE_ITEMS: Item[] = [
-  { id: 'oatcakes', name: "Oatcakes", description: "Baked on the hearthstone.", icon: "🍪" },
-  { id: 'butter', name: "Pot of Butter", description: "A fatty offering.", icon: "🏺" },
-  { id: 'knife', name: "Father's Knife", description: "Iron. Rusted. Sharp.", icon: "🗡️" }
+const ITEMS = [
+  { id: 'oatcakes', name: 'Oatcakes', icon: '🍪', desc: 'Baked on the hearthstone.' },
+  { id: 'butter', name: 'Pot of Butter', icon: '🏺', desc: 'A fatty offering.' },
+  { id: 'knife', name: "Father's Knife", icon: '🗡️', desc: 'Iron. Rusted. Sharp.' }
 ];
 
-const INITIAL_STATE: GameState = {
-  phase: 'INTRO',
-  inventory: [],
+// --- STATE ---
+
+let state = {
+  phase: 'INTRO', // INTRO, HOME, WOODS, AMBUSH, TRANSFORMATION, COTTAGE, ENDING, GAMEOVER
+  inventory: [] as any[],
   distance: 1,
-  claimedItems: [],
-  isLoadingNarrative: false
+  log: [] as string[],
+  waiting: false,
+  cottageStep: 0,
+  inventoryOpen: false,
+  claimedItems: [] as string[]
 };
 
-// --- COMPONENTS ---
+// --- CORE ENGINE ---
 
-const InventoryOverlay: React.FC<{ items: Item[], isOpen: boolean, onClose: () => void }> = ({ items, isOpen, onClose }) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
-      <div className="bg-charcoal border-2 border-blood w-full max-w-md p-6 relative shadow-2xl">
-        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white">
-          <X className="w-6 h-6" />
+function render() {
+  const root = document.getElementById('root');
+  if (!root) return;
+
+  if (state.phase === 'INTRO') {
+    root.innerHTML = `
+      <div class="flex flex-col items-center justify-center h-full text-center px-4 animate-fade-in-up">
+        <h1 class="text-6xl md:text-9xl font-serif text-blood tracking-tighter mb-2">THE WEREWOLF</h1>
+        <h2 class="text-xl md:text-2xl text-gray-500 font-serif italic mb-12">IRON & SNOW</h2>
+        <p class="text-gray-400 max-w-lg leading-relaxed font-serif mb-12 italic">
+          "${NARRATIVE.INTRO.description}"
+        </p>
+        <button id="start-btn" class="px-12 py-4 bg-white text-black font-bold uppercase tracking-widest hover:bg-gray-200 transition-all">
+          Begin the Journey
         </button>
-        <h2 className="font-serif text-2xl text-blood mb-6 tracking-widest uppercase border-b border-slate-700 pb-2">
-          Basket Contents
-        </h2>
-        <div className="grid grid-cols-2 gap-4">
-          {items.length === 0 && <p className="text-slate-500 italic">Your basket is empty.</p>}
-          {items.map((item) => (
-            <div key={item.id} className="border border-slate-700 p-4 flex flex-col items-center text-center bg-slate-900/50">
-              <div className="text-4xl mb-2">{item.icon}</div>
-              <h3 className="font-bold text-slate-200 text-sm uppercase tracking-wide">{item.name}</h3>
-              <p className="text-xs text-slate-500 mt-2 font-serif">{item.description}</p>
-            </div>
-          ))}
-        </div>
       </div>
+    `;
+    const startBtn = document.getElementById('start-btn');
+    if (startBtn) {
+      startBtn.addEventListener('click', () => {
+        state.phase = 'HOME';
+        state.log = [NARRATIVE.HOME.description, NARRATIVE.HOME.mother];
+        render();
+      });
+    }
+    return;
+  }
+
+  root.innerHTML = `
+    <div class="flex flex-col h-full max-w-2xl mx-auto p-4 md:p-8">
+      <!-- Narrative Log -->
+      <div id="narrative-log" class="flex-1 overflow-y-auto space-y-6 mb-8 pr-4 relative scroll-smooth">
+        ${state.log.map(text => `
+          <div class="text-lg font-serif leading-relaxed text-gray-300 border-l-2 border-gray-800 pl-6 py-1 animate-fade-in-up">
+            ${text}
+          </div>
+        `).join('')}
+        <div id="log-end"></div>
+      </div>
+
+      <!-- Interaction Area -->
+      <div class="bg-charcoal/80 border border-gray-800 rounded p-6 min-h-[220px] flex flex-col justify-center shadow-2xl">
+        ${renderInteraction()}
+      </div>
+
+      <!-- Inventory Button -->
+      <button id="inv-toggle" class="fixed bottom-6 right-6 p-4 bg-gray-900 border border-gray-700 text-gray-400 rounded-full hover:text-white transition-all shadow-xl z-30">
+        <i data-lucide="backpack"></i>
+      </button>
+
+      <!-- Inventory Modal -->
+      ${state.inventoryOpen ? renderInventoryModal() : ''}
     </div>
-  );
-};
+  `;
 
-// --- MAIN APP ---
-
-function App() {
-  const [gameState, setGameState] = useState<GameState>(INITIAL_STATE);
-  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
-  const [narrativeLog, setNarrativeLog] = useState<string[]>([]);
-  const [waitingForNextMile, setWaitingForNextMile] = useState(false);
-  const [cottageStep, setCottageStep] = useState<number>(0);
+  // Initialize Icons
+  lucide.createIcons();
   
-  const logEndRef = useRef<HTMLDivElement>(null);
+  // Auto-scroll log
+  const logEl = document.getElementById('narrative-log');
+  if (logEl) logEl.scrollTop = logEl.scrollHeight;
 
-  useEffect(() => {
-    if (logEndRef.current) {
-      logEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [narrativeLog, gameState.phase, waitingForNextMile, cottageStep]);
-
-  const addToLog = (text: string) => {
-    setNarrativeLog(prev => [...prev, text]);
-  };
-
-  const handleAction = async (action: string, payload?: any) => {
-    let nextState = { ...gameState };
-    
-    switch (action) {
-      case 'START_GAME':
-        nextState.phase = 'HOME';
-        setNarrativeLog([NARRATIVE.HOME.description, NARRATIVE.HOME.mother]);
-        break;
-
-      case 'COLLECT_ITEM':
-        const item = payload as Item;
-        if (!nextState.inventory.find(i => i.id === item.id)) {
-          nextState.inventory = [...nextState.inventory, item];
-          addToLog(`You pick up the ${item.name}.`);
-        }
-        break;
-
-      case 'LEAVE_HOME':
-        nextState.phase = 'WOODS_CHOICE';
-        nextState.distance = 1;
-        addToLog(NARRATIVE.WOODS_EVENTS[0].text);
-        break;
-
-      case 'MAKE_CHOICE':
-        const choice = payload as Choice;
-        setGameState(prev => ({ ...prev, isLoadingNarrative: true }));
-        await new Promise(resolve => setTimeout(resolve, 600));
-        addToLog(choice.fallbackText);
-        setWaitingForNextMile(true);
-        setGameState({ ...nextState, isLoadingNarrative: false });
-        return;
-
-      case 'STRIKE_LIMB':
-        nextState.phase = 'TRANSFORMATION';
-        nextState.inventory.push({
-          id: 'wolf-paw',
-          name: "The Wolf's Paw",
-          description: "Wrapped in the cloth meant for oatcakes.",
-          icon: "🐾",
-          isTransformed: false
-        });
-        addToLog(NARRATIVE.TRANSFORMATION.text);
-        addToLog(NARRATIVE.TRANSFORMATION.prompt);
-        break;
-        
-      case 'UNWRAP_HAND': 
-        addToLog(NARRATIVE.COTTAGE.intro);
-        nextState.phase = 'COTTAGE';
-        setCottageStep(0);
-        break;
-
-      case 'CHOICE_MERCY':
-        nextState.phase = 'GAME_OVER';
-        addToLog(NARRATIVE.GAME_OVER.text);
-        break;
-
-      case 'CHOICE_RUTHLESS':
-        nextState.phase = 'ENDING';
-        addToLog("The child crossed herself and cried out so loud the neighbours heard her.");
-        addToLog(NARRATIVE.ENDING.text);
-        break;
-      
-      case 'CLAIM_ITEM':
-        if (!nextState.claimedItems.includes(payload)) {
-          nextState.claimedItems = [...nextState.claimedItems, payload];
-          addToLog(`You claimed the ${payload}.`);
-        }
-        break;
-
-      case 'RESTART':
-        setNarrativeLog([]);
-        setWaitingForNextMile(false);
-        setCottageStep(0);
-        setGameState(INITIAL_STATE);
-        return;
-    }
-
-    setGameState(nextState);
-  };
-
-  const advanceMile = () => {
-    setWaitingForNextMile(false);
-    setGameState(prev => {
-      const newDistance = prev.distance + 1;
-      if (newDistance > 4) {
-        addToLog(NARRATIVE.AMBUSH.intro);
-        addToLog(NARRATIVE.AMBUSH.description);
-        addToLog("You dropped the oatcakes. You dropped the butter. You hold only the knife.");
-        const knifeOnly = prev.inventory.filter(i => i.id === 'knife');
-        return { ...prev, distance: newDistance, phase: 'AMBUSH', inventory: knifeOnly };
-      } else {
-        addToLog(NARRATIVE.WOODS_EVENTS[newDistance - 1].text);
-        return { ...prev, distance: newDistance };
-      }
-    });
-  };
-
-  const handleCottageSequence = () => {
-    if (cottageStep === 0) {
-      addToLog(NARRATIVE.COTTAGE.dialogue);
-      setTimeout(() => {
-        addToLog(NARRATIVE.COTTAGE.reveal);
-        setGameState(prev => ({
-          ...prev,
-          inventory: prev.inventory.map(i => 
-            i.id === 'wolf-paw' 
-              ? { 
-                  ...i, 
-                  name: "Hand with the Wart", 
-                  description: "Toughened with work. A wedding ring on the third finger.", 
-                  icon: "🖐️",
-                  isTransformed: true 
-                } 
-              : i
-          )
-        }));
-        setCottageStep(1);
-      }, 1500);
-    } else if (cottageStep === 1) {
-      addToLog(NARRATIVE.COTTAGE.confrontation);
-      setCottageStep(2);
-    }
-  };
-
-  const renderIntro = () => (
-    <div className="flex flex-col items-center justify-center h-full text-center space-y-8 animate-fade-in px-4">
-      <h1 className="text-5xl md:text-8xl font-serif text-blood tracking-tighter">THE WEREWOLF</h1>
-      <h2 className="text-xl md:text-2xl text-slate-500 font-serif italic">Iron & Snow</h2>
-      <p className="text-lg text-slate-400 max-w-lg leading-relaxed font-serif">
-        "{NARRATIVE.INTRO.description}"
-      </p>
-      <button 
-        onClick={() => handleAction('START_GAME')}
-        className="px-8 py-3 bg-slate-200 text-black font-bold uppercase tracking-widest hover:bg-white hover:scale-105 transition-all"
-      >
-        Begin Story
-      </button>
-    </div>
-  );
-
-  const renderScene = () => (
-    <div className="flex flex-col h-full max-w-2xl mx-auto p-4 relative">
-      <div id="narrative-log" className="flex-1 overflow-y-auto space-y-6 mb-8 pr-2 relative scroll-smooth">
-        <div className="absolute top-0 right-0 opacity-10 pointer-events-none">
-          <Skull className="w-64 h-64" />
-        </div>
-        {narrativeLog.map((log, i) => (
-          <p key={i} className="text-lg font-serif leading-relaxed text-slate-300 border-l-2 border-slate-800 pl-4 py-1 animate-fade-in-up">
-            {log}
-          </p>
-        ))}
-        {gameState.isLoadingNarrative && (
-          <p className="text-sm font-mono text-slate-600 animate-pulse pl-4">The cold wind bites...</p>
-        )}
-        <div ref={logEndRef} />
-      </div>
-
-      <div className="bg-charcoal/90 border-t border-slate-700 p-6 flex flex-col gap-4 min-h-[200px]">
-        {gameState.phase === 'HOME' && (
-          <div className="space-y-4 text-center">
-            <p className="text-xs uppercase tracking-widest text-slate-500">Collect your supplies</p>
-            <div className="flex justify-center gap-4">
-              {AVAILABLE_ITEMS.map(item => {
-                const isCollected = gameState.inventory.find(i => i.id === item.id);
-                return (
-                  <button
-                    key={item.id}
-                    disabled={!!isCollected}
-                    onClick={() => handleAction('COLLECT_ITEM', item)}
-                    className={`p-4 border rounded transition-all flex flex-col items-center gap-2 ${isCollected ? 'border-slate-800 text-slate-700 opacity-50' : 'border-slate-500 hover:bg-slate-800 hover:border-slate-300'}`}
-                  >
-                    <span className="text-2xl">{item.icon}</span>
-                    <span className="text-[10px] font-bold uppercase">{item.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-            {gameState.inventory.length === AVAILABLE_ITEMS.length && (
-              <button onClick={() => handleAction('LEAVE_HOME')} className="w-full py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-slate-200 transition-all">
-                Open the Door
-              </button>
-            )}
-          </div>
-        )}
-
-        {gameState.phase === 'WOODS_CHOICE' && (
-          <div className="space-y-4">
-            {!waitingForNextMile ? (
-              <>
-                <p className="text-sm text-slate-500 font-mono uppercase tracking-widest text-center">Mile {gameState.distance} of 5</p>
-                <div className="grid grid-cols-1 gap-3">
-                  {NARRATIVE.WOODS_EVENTS[gameState.distance - 1].choices.map(choice => (
-                    <button 
-                      key={choice.id}
-                      onClick={() => handleAction('MAKE_CHOICE', choice)}
-                      className="p-4 border border-slate-600 hover:bg-slate-800 hover:border-slate-400 text-left font-bold transition-all"
-                    >
-                      {choice.text}
-                    </button>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <button onClick={advanceMile} className="w-full py-4 bg-slate-100 text-black font-bold uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2">
-                <Footprints className="w-5 h-5" /> Trudge On
-              </button>
-            )}
-          </div>
-        )}
-
-        {gameState.phase === 'AMBUSH' && (
-          <div className="space-y-4 text-center">
-            <p className="text-red-500 font-bold tracking-widest animate-pulse">THE BEAST IS UPON YOU</p>
-            <button onClick={() => handleAction('STRIKE_LIMB')} className="w-full py-6 text-xl font-black bg-blood hover:bg-red-600 text-white border-2 border-white uppercase tracking-widest shadow-lg transition-transform hover:scale-105">
-              Slash the Right Forepaw
-            </button>
-          </div>
-        )}
-
-        {gameState.phase === 'TRANSFORMATION' && (
-          <div className="text-center">
-            <button onClick={() => handleAction('UNWRAP_HAND')} className="w-full py-4 bg-white text-black font-bold uppercase tracking-widest hover:bg-slate-200">
-              Arrive at Cottage
-            </button>
-          </div>
-        )}
-
-        {gameState.phase === 'COTTAGE' && (
-          <div className="space-y-4">
-            {cottageStep === 0 && (
-              <button onClick={handleCottageSequence} className="w-full py-4 bg-slate-100 text-black font-bold uppercase">
-                Make a Cold Compress
-              </button>
-            )}
-            {cottageStep === 1 && (
-              <button onClick={handleCottageSequence} className="w-full py-4 bg-red-900 text-white font-bold uppercase">
-                Check the Grandmother
-              </button>
-            )}
-            {cottageStep === 2 && (
-              <div className="grid grid-cols-2 gap-4">
-                <button onClick={() => handleAction('CHOICE_MERCY')} className="p-4 border border-slate-500 text-slate-400 hover:bg-slate-800 font-bold uppercase text-sm">Comfort Her</button>
-                <button onClick={() => handleAction('CHOICE_RUTHLESS')} className="p-4 bg-blood text-white font-bold uppercase text-sm">Call the Neighbours</button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {gameState.phase === 'ENDING' && (
-          <div className="space-y-6 text-center">
-            <div className="flex justify-center gap-4">
-              {['The Teapot', 'The Mirror', 'The House'].map(item => (
-                <button 
-                  key={item}
-                  disabled={gameState.claimedItems.includes(item)}
-                  onClick={() => handleAction('CLAIM_ITEM', item)}
-                  className={`px-4 py-2 text-xs border ${gameState.claimedItems.includes(item) ? 'bg-slate-700 text-slate-500 border-transparent' : 'border-slate-500 text-slate-300 hover:bg-slate-800 uppercase'}`}
-                >
-                  {gameState.claimedItems.includes(item) ? "Prospering" : `Claim ${item}`}
-                </button>
-              ))}
-            </div>
-            {gameState.claimedItems.length === 3 && (
-              <div className="space-y-4">
-                <h2 className="text-3xl font-serif text-white">She Prospered.</h2>
-                <button onClick={() => handleAction('RESTART')} className="text-slate-500 hover:text-white flex items-center justify-center gap-2 mx-auto pt-4 border-t border-slate-800">
-                  <RotateCcw className="w-4 h-4" /> Reincarnate
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {gameState.phase === 'GAME_OVER' && (
-          <div className="text-center space-y-6">
-            <h2 className="text-4xl font-serif text-blood">GAME OVER</h2>
-            <p className="text-slate-400 font-serif italic">Nature has no mercy for the warm-hearted.</p>
-            <button onClick={() => handleAction('RESTART')} className="px-8 py-3 bg-slate-200 text-black font-bold uppercase tracking-widest hover:bg-white transition-all mx-auto">
-              Try Again
-            </button>
-          </div>
-        )}
-      </div>
-
-      <button onClick={() => setIsInventoryOpen(true)} className="fixed bottom-6 right-6 p-4 bg-charcoal border-2 border-slate-600 text-slate-200 hover:bg-slate-800 transition-colors z-40 rounded-full shadow-lg">
-        <Backpack className="w-6 h-6" />
-      </button>
-
-      <InventoryOverlay items={gameState.inventory} isOpen={isInventoryOpen} onClose={() => setIsInventoryOpen(false)} />
-    </div>
-  );
-
-  return (
-    <div className="bg-black h-screen w-full text-slate-200 font-sans selection:bg-red-900 selection:text-white overflow-hidden">
-      {gameState.phase === 'INTRO' ? renderIntro() : renderScene()}
-      <style>{`
-        .animate-fade-in { animation: fadeIn 1.2s ease-out; }
-        .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        #narrative-log::-webkit-scrollbar { width: 3px; }
-        #narrative-log::-webkit-scrollbar-track { background: transparent; }
-        #narrative-log::-webkit-scrollbar-thumb { background: #333; }
-      `}</style>
-    </div>
-  );
+  attachEvents();
 }
 
-const root = createRoot(document.getElementById('root')!);
-root.render(<App />);
+function renderInteraction() {
+  switch (state.phase) {
+    case 'HOME':
+      return `
+        <div class="text-center space-y-6">
+          <p class="text-xs uppercase tracking-widest text-gray-500">Prepare your basket</p>
+          <div class="flex justify-center gap-4">
+            ${ITEMS.map(item => {
+              const collected = state.inventory.find(i => i.id === item.id);
+              return `
+                <button data-collect="${item.id}" class="flex flex-col items-center p-4 border rounded transition-all ${collected ? 'opacity-20 border-gray-800 grayscale' : 'border-gray-700 hover:border-gray-300'}" ${collected ? 'disabled' : ''}>
+                  <span class="text-3xl mb-1">${item.icon}</span>
+                  <span class="text-[10px] font-bold uppercase">${item.name}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+          ${state.inventory.length === 3 ? `
+            <button id="leave-home" class="w-full py-4 action-primary rounded animate-pulse flex items-center justify-center gap-2">
+              <i data-lucide="door-open" class="w-5 h-5"></i> Open the Door
+            </button>
+          ` : ''}
+        </div>
+      `;
+
+    case 'WOODS':
+      if (state.waiting) {
+        return `
+          <button id="next-mile" class="w-full py-6 action-primary rounded flex items-center justify-center gap-2 text-lg">
+            <i data-lucide="footprints" class="w-6 h-6"></i> Trudge Deeper into the Cold
+          </button>
+        `;
+      }
+      const event = NARRATIVE.WOODS_EVENTS[state.distance - 1];
+      return `
+        <div class="space-y-4">
+          <p class="text-center text-[10px] text-gray-500 uppercase tracking-widest">Mile ${state.distance} of 5</p>
+          <div class="grid grid-cols-1 gap-2">
+            ${event.choices.map(c => `
+              <button data-choice="${c.id}" class="choice-btn w-full p-4 text-left rounded text-sm font-bold text-gray-300 hover:text-white">
+                ${c.text}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+    case 'AMBUSH':
+      return `
+        <div class="text-center space-y-6">
+          <p class="text-red-600 font-bold tracking-widest animate-pulse">A BEAST EMERGES FROM THE SNOW</p>
+          <button id="strike-wolf" class="w-full py-8 action-primary border-4 border-white text-2xl shadow-[0_0_20px_rgba(138,11,11,0.5)]">
+            SLASH THE RIGHT FOREPAW
+          </button>
+        </div>
+      `;
+
+    case 'TRANSFORMATION':
+      return `
+        <button id="go-cottage" class="w-full py-6 action-primary rounded text-lg">
+          Seek your Grandmother's Shelter
+        </button>
+      `;
+
+    case 'COTTAGE':
+      if (state.cottageStep === 0) {
+        return `<button id="do-compress" class="w-full py-6 action-primary rounded">Make a Cold Compress</button>`;
+      }
+      if (state.cottageStep === 1) {
+        return `<button id="check-bed" class="w-full py-6 action-primary rounded bg-red-900 border-2 border-white">Check the Bedding</button>`;
+      }
+      return `
+        <div class="grid grid-cols-2 gap-4">
+          <button id="ending-mercy" class="p-4 border border-gray-700 text-gray-500 hover:text-white font-bold uppercase text-xs">Comfort Her</button>
+          <button id="ending-ruthless" class="p-4 action-primary text-xs">Call the Neighbours</button>
+        </div>
+      `;
+
+    case 'ENDING':
+      return `
+        <div class="text-center space-y-6">
+          <h2 class="text-3xl font-serif text-white uppercase tracking-widest">She Prospered</h2>
+          <div class="flex justify-center gap-2">
+            ${['Teapot', 'Mirror', 'House'].map(it => `
+              <button data-claim="${it}" class="px-4 py-2 border border-gray-600 text-[10px] uppercase font-bold ${state.claimedItems.includes(it) ? 'bg-gray-800 text-gray-500 line-through' : 'hover:border-white'}">
+                Claim ${it}
+              </button>
+            `).join('')}
+          </div>
+          ${state.claimedItems.length === 3 ? `
+            <button id="restart-game" class="text-gray-600 hover:text-white text-xs underline mt-4">Begin a New Life</button>
+          ` : ''}
+        </div>
+      `;
+
+    case 'GAMEOVER':
+      return `
+        <div class="text-center space-y-4">
+          <h2 class="text-3xl font-serif text-blood">THE TRAP</h2>
+          <p class="text-gray-500 text-sm italic">Kindness is a luxury the mountains do not afford.</p>
+          <button id="restart-game" class="px-8 py-3 action-primary mt-4">Try Again</button>
+        </div>
+      `;
+
+    default: return '';
+  }
+}
+
+function renderInventoryModal() {
+  return `
+    <div class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-charcoal border-2 border-blood w-full max-w-sm p-8 relative shadow-2xl">
+        <button id="inv-close" class="absolute top-4 right-4 text-gray-500 hover:text-white">
+          <i data-lucide="x"></i>
+        </button>
+        <h3 class="text-blood font-serif text-2xl border-b border-gray-800 pb-2 mb-6 tracking-widest uppercase">The Basket</h3>
+        <div class="space-y-4">
+          ${state.inventory.length === 0 ? '<p class="text-gray-600 italic">It is empty.</p>' : ''}
+          ${state.inventory.map(item => `
+            <div class="flex items-center gap-4 p-3 border border-gray-800 bg-black/40">
+              <span class="text-3xl">${item.icon}</span>
+              <div>
+                <p class="font-bold text-gray-200 text-sm uppercase">${item.name}</p>
+                <p class="text-[10px] text-gray-500 font-serif">${item.desc || ''}</p>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// --- EVENT HANDLERS ---
+
+function attachEvents() {
+  // Collection
+  // Fix: Cast elements to HTMLElement to access onclick and dataset
+  (document.querySelectorAll('[data-collect]') as NodeListOf<HTMLElement>).forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.dataset.collect;
+      const item = ITEMS.find(i => i.id === id);
+      if (item) {
+        state.inventory.push(item);
+        state.log.push(`You placed the ${item.name} in your basket.`);
+        render();
+      }
+    };
+  });
+
+  // Home Phase
+  const leaveHome = document.getElementById('leave-home');
+  if (leaveHome) leaveHome.onclick = () => {
+    state.phase = 'WOODS';
+    state.distance = 1;
+    state.log.push(NARRATIVE.WOODS_EVENTS[0].text);
+    render();
+  };
+
+  // Woods Choices
+  // Fix: Cast elements to HTMLElement to access onclick and dataset
+  (document.querySelectorAll('[data-choice]') as NodeListOf<HTMLElement>).forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.dataset.choice;
+      const event = NARRATIVE.WOODS_EVENTS[state.distance - 1];
+      const choice = event.choices.find(c => c.id === id);
+      if (choice) {
+        state.log.push(choice.outcome);
+        state.waiting = true;
+        render();
+      }
+    };
+  });
+
+  // Next Mile
+  const nextMile = document.getElementById('next-mile');
+  if (nextMile) nextMile.onclick = () => {
+    state.waiting = false;
+    state.distance++;
+    if (state.distance > 4) {
+      state.phase = 'AMBUSH';
+      state.inventory = state.inventory.filter(i => i.id === 'knife'); // Lose gifts
+      state.log.push(NARRATIVE.AMBUSH.intro);
+      state.log.push(NARRATIVE.AMBUSH.description);
+      state.log.push("You dropped your gifts. You hold only the knife.");
+    } else {
+      state.log.push(NARRATIVE.WOODS_EVENTS[state.distance - 1].text);
+    }
+    render();
+  };
+
+  // Ambush
+  const strikeWolf = document.getElementById('strike-wolf');
+  if (strikeWolf) strikeWolf.onclick = () => {
+    state.phase = 'TRANSFORMATION';
+    state.inventory.push({ id: 'paw', name: "The Wolf's Paw", icon: '🐾', desc: 'Wrapped in a bloody cloth.' });
+    state.log.push(NARRATIVE.TRANSFORMATION.text);
+    state.log.push(NARRATIVE.TRANSFORMATION.prompt);
+    render();
+  };
+
+  // Arrival
+  const goCottage = document.getElementById('go-cottage');
+  if (goCottage) goCottage.onclick = () => {
+    state.phase = 'COTTAGE';
+    state.cottageStep = 0;
+    state.log.push(NARRATIVE.COTTAGE.intro);
+    render();
+  };
+
+  // Cottage Sequence
+  const doCompress = document.getElementById('do-compress');
+  if (doCompress) doCompress.onclick = () => {
+    state.log.push(NARRATIVE.COTTAGE.dialogue);
+    setTimeout(() => {
+      state.cottageStep = 1;
+      state.inventory = state.inventory.map(i => i.id === 'paw' ? { ...i, name: 'A Severed Hand', icon: '🖐️', desc: 'A wedding ring on the finger.' } : i);
+      state.log.push(NARRATIVE.COTTAGE.reveal);
+      render();
+    }, 1200);
+  };
+
+  const checkBed = document.getElementById('check-bed');
+  if (checkBed) checkBed.onclick = () => {
+    state.cottageStep = 2;
+    state.log.push(NARRATIVE.COTTAGE.confrontation);
+    render();
+  };
+
+  // Endings
+  const mercy = document.getElementById('ending-mercy');
+  if (mercy) mercy.onclick = () => {
+    state.phase = 'GAMEOVER';
+    state.log.push(NARRATIVE.GAMEOVER.text);
+    render();
+  };
+
+  const ruthless = document.getElementById('ending-ruthless');
+  if (ruthless) ruthless.onclick = () => {
+    state.phase = 'ENDING';
+    state.log.push("The child crossed herself and cried out so loud the neighbours heard her.");
+    state.log.push(NARRATIVE.ENDING.text);
+    render();
+  };
+
+  // Claim items in ending
+  // Fix: Cast elements to HTMLElement to access onclick and dataset
+  (document.querySelectorAll('[data-claim]') as NodeListOf<HTMLElement>).forEach(btn => {
+    btn.onclick = () => {
+      const item = btn.dataset.claim;
+      if (item && !state.claimedItems.includes(item)) {
+        state.claimedItems.push(item);
+        state.log.push(`You claimed the ${item}.`);
+        render();
+      }
+    };
+  });
+
+  // UI Toggles
+  const invToggle = document.getElementById('inv-toggle');
+  if (invToggle) invToggle.onclick = () => {
+    state.inventoryOpen = true;
+    render();
+  };
+
+  const invClose = document.getElementById('inv-close');
+  if (invClose) invClose.onclick = () => {
+    state.inventoryOpen = false;
+    render();
+  };
+
+  const restart = document.getElementById('restart-game');
+  if (restart) restart.onclick = () => {
+    state = {
+      phase: 'INTRO',
+      inventory: [],
+      distance: 1,
+      log: [],
+      waiting: false,
+      cottageStep: 0,
+      inventoryOpen: false,
+      claimedItems: []
+    };
+    render();
+  };
+}
+
+// Initial Boot
+render();

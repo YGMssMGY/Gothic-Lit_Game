@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Iron & Snow - The Werewolf</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script>
       tailwind.config = {
         theme: {
@@ -25,11 +26,11 @@
     </script>
     <style>
       @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(10px); }
+        from { opacity: 0; transform: translateY(15px); }
         to { opacity: 1; transform: translateY(0); }
       }
       .animate-fade-in-up {
-        animation: fadeInUp 0.5s ease-out forwards;
+        animation: fadeInUp 0.6s ease-out forwards;
       }
       body {
         background-color: #000;
@@ -44,7 +45,7 @@
         background: #000;
       }
       #narrative-log::-webkit-scrollbar-thumb {
-        background: #444;
+        background: #333;
       }
       #narrative-log::-webkit-scrollbar-thumb:hover {
         background: #8a0b0b;
@@ -52,10 +53,11 @@
       .choice-btn {
         transition: all 0.2s ease;
         border: 1px solid #374151;
+        background: #1c1917;
       }
       .choice-btn:hover {
         border-color: #d1d5db;
-        background-color: #111827;
+        background-color: #262626;
       }
       .action-primary {
         background-color: #8a0b0b;
@@ -63,22 +65,16 @@
         font-weight: bold;
         text-transform: uppercase;
         letter-spacing: 0.1em;
+        transition: transform 0.1s active;
       }
       .action-primary:hover {
         background-color: #b91c1c;
       }
+      .action-primary:active {
+        transform: scale(0.98);
+      }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
-  }
-}
-</script>
-</head>
+  </head>
   <body>
     <div id="root" class="h-full w-full relative"></div>
     <script type="module" src="./index.tsx"></script>
