@@ -5,26 +5,18 @@ import {
   Hand, 
   Skull, 
   RotateCcw, 
-  Wind,
-  CheckCircle,
   PackageOpen,
   Crosshair,
   Home,
-  ArrowRight,
   ShieldAlert,
-  Flame,
-  Utensils,
   DoorOpen,
   Eye,
-  Megaphone
+  Megaphone,
+  Wind
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { GameState, Item, ActionType, Choice } from './types';
 import { NARRATIVE } from './constants';
-import ColdHeartMeter from './components/ColdHeartMeter';
 import Inventory from './components/Inventory';
-// Ensure this import uses ./ and not @/
-import { getAtmosphericDescription, getNarrativeOutcome } from './services/geminiService';
 
 const AVAILABLE_ITEMS: Item[] = [
   {
@@ -49,10 +41,8 @@ const AVAILABLE_ITEMS: Item[] = [
 
 const INITIAL_STATE: GameState = {
   phase: 'INTRO',
-  coldHeart: 20,
   inventory: [],
   distance: 1,
-  history: [{ turn: 0, coldHeart: 20 }],
   claimedItems: [],
   isLoadingNarrative: false
 };
@@ -61,8 +51,6 @@ export default function App() {
   const [gameState, setGameState] = useState<GameState>(INITIAL_STATE);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [narrativeLog, setNarrativeLog] = useState<string[]>([]);
-  const [whisper, setWhisper] = useState<string | null>(null);
-  const [isWhispering, setIsWhispering] = useState(false);
   const [waitingForNextMile, setWaitingForNextMile] = useState(false);
   const [cottageStep, setCottageStep] = useState<number>(0); // 0: Enter, 1: Reveal, 2: Confront
   
@@ -73,16 +61,13 @@ export default function App() {
     if (logEndRef.current) {
       logEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [narrativeLog, whisper, gameState.phase, waitingForNextMile, cottageStep]);
+  }, [narrativeLog, gameState.phase, waitingForNextMile, cottageStep]);
 
   const addToLog = (text: string) => {
     setNarrativeLog(prev => [...prev, text]);
   };
 
   const handleAction = async (action: ActionType, payload?: any) => {
-    setWhisper(null); 
-    
-    // Create a copy of state to modify
     let nextState = { ...gameState };
     
     switch (action) {
@@ -109,18 +94,9 @@ export default function App() {
         const choice = payload as Choice;
         setGameState(prev => ({ ...prev, isLoadingNarrative: true }));
         
-        // Optimistic update for UI
-        nextState.coldHeart = Math.max(0, Math.min(100, nextState.coldHeart + choice.coldHeartImpact));
-        nextState.history = [...nextState.history, { turn: nextState.history.length + 1, coldHeart: nextState.coldHeart }];
+        await new Promise(resolve => setTimeout(resolve, 600));
         
-        // Call Service
-        const outcome = await getNarrativeOutcome(
-          choice.narrativePrompt, 
-          choice.text, 
-          nextState.coldHeart, 
-          choice.fallbackText
-        );
-        
+        const outcome = choice.fallbackText;
         addToLog(outcome);
         setWaitingForNextMile(true);
         setGameState({ ...nextState, isLoadingNarrative: false });
@@ -136,7 +112,6 @@ export default function App() {
 
       case ActionType.STRIKE_LIMB:
         nextState.phase = 'TRANSFORMATION';
-        nextState.coldHeart = 100; // Peak coldness
         nextState.inventory.push({
           id: 'wolf-paw',
           name: "The Wolf's Paw",
@@ -148,8 +123,7 @@ export default function App() {
         addToLog(NARRATIVE.TRANSFORMATION.prompt);
         break;
         
-      case ActionType.UNWRAP_HAND: // Used for "Make a Compress"
-        // This triggers the reveal sequence
+      case ActionType.UNWRAP_HAND: 
         addToLog(NARRATIVE.COTTAGE.intro);
         nextState.phase = 'COTTAGE';
         setCottageStep(0);
@@ -191,7 +165,6 @@ export default function App() {
       if (newDistance > 4) {
         addToLog(NARRATIVE.AMBUSH.intro);
         addToLog(NARRATIVE.AMBUSH.description);
-        // Force drop items
         addToLog("You dropped the oatcakes. You dropped the butter. You hold only the knife.");
         const knifeOnly = prev.inventory.filter(i => i.id === 'knife');
         return { ...prev, distance: newDistance, phase: 'AMBUSH', inventory: knifeOnly };
@@ -204,7 +177,6 @@ export default function App() {
 
   const handleCottageSequence = () => {
     if (cottageStep === 0) {
-      // Reveal the hand
       addToLog(NARRATIVE.COTTAGE.dialogue);
       setTimeout(() => {
         addToLog(NARRATIVE.COTTAGE.reveal);
@@ -225,28 +197,14 @@ export default function App() {
         setCottageStep(1);
       }, 1500);
     } else if (cottageStep === 1) {
-      // Confrontation
       addToLog(NARRATIVE.COTTAGE.confrontation);
       setCottageStep(2);
     }
   };
 
   const examineItem = (item: Item) => {
-    // Basic examine
     addToLog(`You look at the ${item.name}. ${item.description}`);
   };
-
-  const askTheWind = async () => {
-    setIsWhispering(true);
-    let context = `Phase: ${gameState.phase}. `;
-    if (gameState.phase === 'WOODS_CHOICE') context += `Mile ${gameState.distance} of 5.`;
-    
-    const text = await getAtmosphericDescription(context, gameState.coldHeart);
-    setWhisper(text);
-    setIsWhispering(false);
-  };
-
-  // --- RENDERERS ---
 
   const renderIntro = () => (
     <div className="flex flex-col items-center justify-center h-full text-center space-y-8 animate-fade-in px-4">
@@ -267,7 +225,6 @@ export default function App() {
   const renderScene = () => {
     return (
       <div className="flex flex-col h-full max-w-2xl mx-auto p-4 relative">
-        {/* Narrative Log */}
         <div className="flex-1 overflow-y-auto space-y-6 mb-8 pr-2 relative">
            <div className="absolute top-0 right-0 opacity-10 pointer-events-none">
               <Skull className="w-64 h-64" />
@@ -277,18 +234,12 @@ export default function App() {
               {log}
             </p>
           ))}
-          {whisper && (
-            <p className="text-md font-serif italic text-blue-200/80 pl-8 border-l border-blue-900/50 py-2 animate-pulse-slow">
-              "{whisper}"
-            </p>
-          )}
           {gameState.isLoadingNarrative && (
-             <p className="text-sm font-mono text-slate-600 animate-pulse pl-4">The wind howls...</p>
+             <p className="text-sm font-mono text-slate-600 animate-pulse pl-4">The cold wind bites...</p>
           )}
           <div ref={logEndRef} />
         </div>
 
-        {/* Controls Area */}
         <div className="bg-charcoal/90 border-t border-slate-700 p-6 flex flex-col gap-4 min-h-[200px]">
           
           {gameState.phase === 'HOME' && (
@@ -335,10 +286,6 @@ export default function App() {
                       >
                         <span className="block font-bold text-slate-200 group-hover:text-white mb-1">
                           {choice.text}
-                        </span>
-                        <span className="text-xs text-slate-500 font-mono flex items-center gap-2">
-                           <Wind className="w-3 h-3" />
-                           {choice.coldHeartImpact > 0 ? "Hardens Heart" : choice.coldHeartImpact < 0 ? "Softens Heart" : "Neutral"}
                         </span>
                       </button>
                     ))}
@@ -394,7 +341,6 @@ export default function App() {
 
               {cottageStep === 2 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in-up">
-                  {/* Mercy option acts as a trap */}
                   <button onClick={() => handleAction(ActionType.CHOICE_MERCY)} className="p-4 border border-slate-500 text-slate-400 hover:bg-slate-800 transition-colors flex flex-col items-center">
                      <Hand className="w-8 h-8 mb-2" />
                      <span className="uppercase tracking-widest text-sm">Comfort Her</span>
@@ -431,18 +377,7 @@ export default function App() {
               {gameState.claimedItems.length === 3 && (
                 <div className="text-center animate-fade-in space-y-4">
                   <h2 className="text-3xl font-serif text-white">She Prospered.</h2>
-                  <div className="h-32 w-full">
-                     <p className="text-xs text-slate-500 mb-2">Cold Heart Level</p>
-                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={gameState.history}>
-                          <XAxis hide />
-                          <YAxis domain={[0, 100]} hide />
-                          <Tooltip contentStyle={{ backgroundColor: '#1c1917', border: '1px solid #333' }} itemStyle={{ color: '#fff' }} />
-                          <Line type="monotone" dataKey="coldHeart" stroke="#93c5fd" strokeWidth={2} dot={false} />
-                        </LineChart>
-                     </ResponsiveContainer>
-                  </div>
-                  <button onClick={() => handleAction(ActionType.RESTART)} className="text-slate-500 hover:text-white flex items-center justify-center gap-2 mx-auto">
+                  <button onClick={() => handleAction(ActionType.RESTART)} className="text-slate-500 hover:text-white flex items-center justify-center gap-2 mx-auto pt-4 border-t border-slate-800">
                     <RotateCcw className="w-4 h-4" /> Reincarnate
                   </button>
                 </div>
@@ -460,15 +395,7 @@ export default function App() {
             </div>
           )}
           
-          <div className="flex justify-between mt-2 pt-2 border-t border-slate-800">
-             <button 
-               onClick={askTheWind} 
-               disabled={isWhispering}
-               className="text-xs text-slate-500 hover:text-blue-300 flex items-center gap-2 transition-colors"
-             >
-               <Wind className={`w-3 h-3 ${isWhispering ? 'animate-spin' : ''}`} />
-               {isWhispering ? "Listening..." : "Listen to the Wind"}
-             </button>
+          <div className="flex justify-center mt-2 pt-2 border-t border-slate-800">
              {gameState.phase !== 'INTRO' && (
                 <span className="text-xs text-slate-700 font-mono">
                   {gameState.phase}
@@ -481,20 +408,22 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-900 text-slate-200 font-sans selection:bg-blood selection:text-white overflow-hidden">
-      {gameState.phase !== 'INTRO' && <ColdHeartMeter value={gameState.coldHeart} />}
-      
-      <main className="h-screen w-full">
-        {gameState.phase === 'INTRO' ? renderIntro() : renderScene()}
-      </main>
+    <div className="bg-black h-screen w-full text-slate-200 font-sans selection:bg-red-900 selection:text-white overflow-hidden relative">
+      {gameState.phase === 'INTRO' ? (
+        renderIntro()
+      ) : (
+        renderScene()
+      )}
 
-      <Inventory 
-        items={gameState.inventory} 
-        isOpen={isInventoryOpen} 
-        setIsOpen={setIsInventoryOpen}
-        onExamine={examineItem}
-      />
-      
+      {gameState.phase !== 'INTRO' && (
+        <Inventory 
+          items={gameState.inventory} 
+          isOpen={isInventoryOpen} 
+          setIsOpen={setIsInventoryOpen}
+          onExamine={examineItem}
+        />
+      )}
+
       <style>{`
         .action-btn {
           @apply py-3 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded flex items-center justify-center gap-2 font-bold uppercase tracking-wider transition-all text-sm;
