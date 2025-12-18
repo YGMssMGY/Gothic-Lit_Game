@@ -3,8 +3,9 @@
  * Vanilla JavaScript Implementation
  */
 
-// Fix: Add declaration for the global lucide icon library
-declare const lucide: any;
+// --- CONSTANTS ---
+
+var REVEAL_DELAY_MS = 1200; // Delay for dramatic reveal effect in cottage scene
 
 // --- DATA ---
 
@@ -86,13 +87,13 @@ const ITEMS = [
 
 let state = {
   phase: 'INTRO', // INTRO, HOME, WOODS, AMBUSH, TRANSFORMATION, COTTAGE, ENDING, GAMEOVER
-  inventory: [] as any[],
+  inventory: [],
   distance: 1,
-  log: [] as string[],
+  log: [],
   waiting: false,
   cottageStep: 0,
   inventoryOpen: false,
-  claimedItems: [] as string[]
+  claimedItems: []
 };
 
 // --- CORE ENGINE ---
@@ -116,7 +117,7 @@ function render() {
     `;
     const startBtn = document.getElementById('start-btn');
     if (startBtn) {
-      startBtn.addEventListener('click', () => {
+      startBtn.addEventListener('click', function() {
         state.phase = 'HOME';
         state.log = [NARRATIVE.HOME.description, NARRATIVE.HOME.mother];
         render();
@@ -129,11 +130,11 @@ function render() {
     <div class="flex flex-col h-full max-w-2xl mx-auto p-4 md:p-8">
       <!-- Narrative Log -->
       <div id="narrative-log" class="flex-1 overflow-y-auto space-y-6 mb-8 pr-4 relative scroll-smooth">
-        ${state.log.map(text => `
+        ${state.log.map(function(text) { return `
           <div class="text-lg font-serif leading-relaxed text-gray-300 border-l-2 border-gray-800 pl-6 py-1 animate-fade-in-up">
             ${text}
           </div>
-        `).join('')}
+        `; }).join('')}
         <div id="log-end"></div>
       </div>
 
@@ -143,7 +144,7 @@ function render() {
       </div>
 
       <!-- Inventory Button -->
-      <button id="inv-toggle" class="fixed bottom-6 right-6 p-4 bg-gray-900 border border-gray-700 text-gray-400 rounded-full hover:text-white transition-all shadow-xl z-30">
+      <button id="inv-toggle" class="fixed bottom-6 right-6 p-4 bg-gray-900 border border-gray-700 text-gray-400 rounded-full hover:text-white transition-all shadow-xl z-30" aria-label="Open inventory" role="button">
         <i data-lucide="backpack"></i>
       </button>
 
@@ -153,7 +154,9 @@ function render() {
   `;
 
   // Initialize Icons
-  lucide.createIcons();
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
   
   // Auto-scroll log
   const logEl = document.getElementById('narrative-log');
@@ -169,8 +172,8 @@ function renderInteraction() {
         <div class="text-center space-y-6">
           <p class="text-xs uppercase tracking-widest text-gray-500">Prepare your basket</p>
           <div class="flex justify-center gap-4">
-            ${ITEMS.map(item => {
-              const collected = state.inventory.find(i => i.id === item.id);
+            ${ITEMS.map(function(item) {
+              const collected = state.inventory.find(function(i) { return i.id === item.id; });
               return `
                 <button data-collect="${item.id}" class="flex flex-col items-center p-4 border rounded transition-all ${collected ? 'opacity-20 border-gray-800 grayscale' : 'border-gray-700 hover:border-gray-300'}" ${collected ? 'disabled' : ''}>
                   <span class="text-3xl mb-1">${item.icon}</span>
@@ -195,16 +198,16 @@ function renderInteraction() {
           </button>
         `;
       }
-      const event = NARRATIVE.WOODS_EVENTS[state.distance - 1];
+      var event = NARRATIVE.WOODS_EVENTS[state.distance - 1];
       return `
         <div class="space-y-4">
           <p class="text-center text-[10px] text-gray-500 uppercase tracking-widest">Mile ${state.distance} of 5</p>
           <div class="grid grid-cols-1 gap-2">
-            ${event.choices.map(c => `
+            ${event.choices.map(function(c) { return `
               <button data-choice="${c.id}" class="choice-btn w-full p-4 text-left rounded text-sm font-bold text-gray-300 hover:text-white">
                 ${c.text}
               </button>
-            `).join('')}
+            `; }).join('')}
           </div>
         </div>
       `;
@@ -245,11 +248,11 @@ function renderInteraction() {
         <div class="text-center space-y-6">
           <h2 class="text-3xl font-serif text-white uppercase tracking-widest">She Prospered</h2>
           <div class="flex justify-center gap-2">
-            ${['Teapot', 'Mirror', 'House'].map(it => `
+            ${['Teapot', 'Mirror', 'House'].map(function(it) { return `
               <button data-claim="${it}" class="px-4 py-2 border border-gray-600 text-[10px] uppercase font-bold ${state.claimedItems.includes(it) ? 'bg-gray-800 text-gray-500 line-through' : 'hover:border-white'}">
                 Claim ${it}
               </button>
-            `).join('')}
+            `; }).join('')}
           </div>
           ${state.claimedItems.length === 3 ? `
             <button id="restart-game" class="text-gray-600 hover:text-white text-xs underline mt-4">Begin a New Life</button>
@@ -272,15 +275,15 @@ function renderInteraction() {
 
 function renderInventoryModal() {
   return `
-    <div class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="inventory-title">
       <div class="bg-charcoal border-2 border-blood w-full max-w-sm p-8 relative shadow-2xl">
-        <button id="inv-close" class="absolute top-4 right-4 text-gray-500 hover:text-white">
+        <button id="inv-close" class="absolute top-4 right-4 text-gray-500 hover:text-white" aria-label="Close inventory">
           <i data-lucide="x"></i>
         </button>
-        <h3 class="text-blood font-serif text-2xl border-b border-gray-800 pb-2 mb-6 tracking-widest uppercase">The Basket</h3>
+        <h3 id="inventory-title" class="text-blood font-serif text-2xl border-b border-gray-800 pb-2 mb-6 tracking-widest uppercase">The Basket</h3>
         <div class="space-y-4">
           ${state.inventory.length === 0 ? '<p class="text-gray-600 italic">It is empty.</p>' : ''}
-          ${state.inventory.map(item => `
+          ${state.inventory.map(function(item) { return `
             <div class="flex items-center gap-4 p-3 border border-gray-800 bg-black/40">
               <span class="text-3xl">${item.icon}</span>
               <div>
@@ -288,7 +291,7 @@ function renderInventoryModal() {
                 <p class="text-[10px] text-gray-500 font-serif">${item.desc || ''}</p>
               </div>
             </div>
-          `).join('')}
+          `; }).join('')}
         </div>
       </div>
     </div>
@@ -299,22 +302,21 @@ function renderInventoryModal() {
 
 function attachEvents() {
   // Collection
-  // Fix: Cast elements to HTMLElement to access onclick and dataset
-  (document.querySelectorAll('[data-collect]') as NodeListOf<HTMLElement>).forEach(btn => {
-    btn.onclick = () => {
-      const id = btn.dataset.collect;
-      const item = ITEMS.find(i => i.id === id);
+  document.querySelectorAll('[data-collect]').forEach(function(btn) {
+    btn.onclick = function() {
+      var id = btn.dataset.collect;
+      var item = ITEMS.find(function(i) { return i.id === id; });
       if (item) {
         state.inventory.push(item);
-        state.log.push(`You placed the ${item.name} in your basket.`);
+        state.log.push('You placed the ' + item.name + ' in your basket.');
         render();
       }
     };
   });
 
   // Home Phase
-  const leaveHome = document.getElementById('leave-home');
-  if (leaveHome) leaveHome.onclick = () => {
+  var leaveHome = document.getElementById('leave-home');
+  if (leaveHome) leaveHome.onclick = function() {
     state.phase = 'WOODS';
     state.distance = 1;
     state.log.push(NARRATIVE.WOODS_EVENTS[0].text);
@@ -322,12 +324,11 @@ function attachEvents() {
   };
 
   // Woods Choices
-  // Fix: Cast elements to HTMLElement to access onclick and dataset
-  (document.querySelectorAll('[data-choice]') as NodeListOf<HTMLElement>).forEach(btn => {
-    btn.onclick = () => {
-      const id = btn.dataset.choice;
-      const event = NARRATIVE.WOODS_EVENTS[state.distance - 1];
-      const choice = event.choices.find(c => c.id === id);
+  document.querySelectorAll('[data-choice]').forEach(function(btn) {
+    btn.onclick = function() {
+      var id = btn.dataset.choice;
+      var event = NARRATIVE.WOODS_EVENTS[state.distance - 1];
+      var choice = event.choices.find(function(c) { return c.id === id; });
       if (choice) {
         state.log.push(choice.outcome);
         state.waiting = true;
@@ -337,13 +338,13 @@ function attachEvents() {
   });
 
   // Next Mile
-  const nextMile = document.getElementById('next-mile');
-  if (nextMile) nextMile.onclick = () => {
+  var nextMile = document.getElementById('next-mile');
+  if (nextMile) nextMile.onclick = function() {
     state.waiting = false;
     state.distance++;
     if (state.distance > 4) {
       state.phase = 'AMBUSH';
-      state.inventory = state.inventory.filter(i => i.id === 'knife'); // Lose gifts
+      state.inventory = state.inventory.filter(function(i) { return i.id === 'knife'; }); // Lose gifts
       state.log.push(NARRATIVE.AMBUSH.intro);
       state.log.push(NARRATIVE.AMBUSH.description);
       state.log.push("You dropped your gifts. You hold only the knife.");
@@ -354,8 +355,8 @@ function attachEvents() {
   };
 
   // Ambush
-  const strikeWolf = document.getElementById('strike-wolf');
-  if (strikeWolf) strikeWolf.onclick = () => {
+  var strikeWolf = document.getElementById('strike-wolf');
+  if (strikeWolf) strikeWolf.onclick = function() {
     state.phase = 'TRANSFORMATION';
     state.inventory.push({ id: 'paw', name: "The Wolf's Paw", icon: '🐾', desc: 'Wrapped in a bloody cloth.' });
     state.log.push(NARRATIVE.TRANSFORMATION.text);
@@ -364,8 +365,8 @@ function attachEvents() {
   };
 
   // Arrival
-  const goCottage = document.getElementById('go-cottage');
-  if (goCottage) goCottage.onclick = () => {
+  var goCottage = document.getElementById('go-cottage');
+  if (goCottage) goCottage.onclick = function() {
     state.phase = 'COTTAGE';
     state.cottageStep = 0;
     state.log.push(NARRATIVE.COTTAGE.intro);
@@ -373,34 +374,36 @@ function attachEvents() {
   };
 
   // Cottage Sequence
-  const doCompress = document.getElementById('do-compress');
-  if (doCompress) doCompress.onclick = () => {
+  var doCompress = document.getElementById('do-compress');
+  if (doCompress) doCompress.onclick = function() {
     state.log.push(NARRATIVE.COTTAGE.dialogue);
-    setTimeout(() => {
+    setTimeout(function() {
       state.cottageStep = 1;
-      state.inventory = state.inventory.map(i => i.id === 'paw' ? { ...i, name: 'A Severed Hand', icon: '🖐️', desc: 'A wedding ring on the finger.' } : i);
+      state.inventory = state.inventory.map(function(i) {
+        return i.id === 'paw' ? { id: i.id, name: 'A Severed Hand', icon: '🖐️', desc: 'A wedding ring on the finger.' } : i;
+      });
       state.log.push(NARRATIVE.COTTAGE.reveal);
       render();
-    }, 1200);
+    }, REVEAL_DELAY_MS);
   };
 
-  const checkBed = document.getElementById('check-bed');
-  if (checkBed) checkBed.onclick = () => {
+  var checkBed = document.getElementById('check-bed');
+  if (checkBed) checkBed.onclick = function() {
     state.cottageStep = 2;
     state.log.push(NARRATIVE.COTTAGE.confrontation);
     render();
   };
 
   // Endings
-  const mercy = document.getElementById('ending-mercy');
-  if (mercy) mercy.onclick = () => {
+  var mercy = document.getElementById('ending-mercy');
+  if (mercy) mercy.onclick = function() {
     state.phase = 'GAMEOVER';
     state.log.push(NARRATIVE.GAMEOVER.text);
     render();
   };
 
-  const ruthless = document.getElementById('ending-ruthless');
-  if (ruthless) ruthless.onclick = () => {
+  var ruthless = document.getElementById('ending-ruthless');
+  if (ruthless) ruthless.onclick = function() {
     state.phase = 'ENDING';
     state.log.push("The child crossed herself and cried out so loud the neighbours heard her.");
     state.log.push(NARRATIVE.ENDING.text);
@@ -408,33 +411,32 @@ function attachEvents() {
   };
 
   // Claim items in ending
-  // Fix: Cast elements to HTMLElement to access onclick and dataset
-  (document.querySelectorAll('[data-claim]') as NodeListOf<HTMLElement>).forEach(btn => {
-    btn.onclick = () => {
-      const item = btn.dataset.claim;
+  document.querySelectorAll('[data-claim]').forEach(function(btn) {
+    btn.onclick = function() {
+      var item = btn.dataset.claim;
       if (item && !state.claimedItems.includes(item)) {
         state.claimedItems.push(item);
-        state.log.push(`You claimed the ${item}.`);
+        state.log.push('You claimed the ' + item + '.');
         render();
       }
     };
   });
 
   // UI Toggles
-  const invToggle = document.getElementById('inv-toggle');
-  if (invToggle) invToggle.onclick = () => {
+  var invToggle = document.getElementById('inv-toggle');
+  if (invToggle) invToggle.onclick = function() {
     state.inventoryOpen = true;
     render();
   };
 
-  const invClose = document.getElementById('inv-close');
-  if (invClose) invClose.onclick = () => {
+  var invClose = document.getElementById('inv-close');
+  if (invClose) invClose.onclick = function() {
     state.inventoryOpen = false;
     render();
   };
 
-  const restart = document.getElementById('restart-game');
-  if (restart) restart.onclick = () => {
+  var restart = document.getElementById('restart-game');
+  if (restart) restart.onclick = function() {
     state = {
       phase: 'INTRO',
       inventory: [],
@@ -449,5 +451,7 @@ function attachEvents() {
   };
 }
 
-// Initial Boot
-render();
+// Initial Boot - Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', function() {
+  render();
+});

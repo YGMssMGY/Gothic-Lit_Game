@@ -2,19 +2,39 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# Iron & Snow: The Werewolf
 
-This contains everything you need to run your app locally.
+A Gothic interactive fiction game based on Angela Carter's "The Werewolf". This is a simple, dependency-free web-based game that runs directly in the browser.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1I22BrwBAEutakNFlsDyk7I4TNLgCx_9y
+## Play Online
+
+Visit the GitHub Pages deployment to play the game directly in your browser.
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
+Simply open `index.html` in any modern web browser. No build process or dependencies required!
 
+### Using a local server (optional)
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+If you prefer to use a local server:
+
+```bash
+# Using Python 3
+python -m http.server 8000
+
+# Using Node.js (if installed)
+npx serve .
+
+# Using PHP
+php -S localhost:8000
+```
+
+Then open http://localhost:8000 in your browser.
+
+## Features
+
+- 🎮 Interactive narrative gameplay
+- 🌲 Atmospheric Gothic storytelling
+- 📱 Responsive design for all devices
+- ⚡ No dependencies - works offline
+- 🚀 Instant loading - no build step required
